@@ -7,9 +7,12 @@
   "keywords": [],
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "esno src/build.ts"
   },
   "devDependencies": {
+    "@types/qrcode-terminal": "^0.12.2",
+    "esno": "^4.7.0",
+    "qrcode-terminal": "^0.12.0",
     "typescript": "^5.4.5",
     "undici": "^6.16.0"
   }

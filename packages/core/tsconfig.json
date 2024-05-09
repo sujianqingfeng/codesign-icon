@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2022",
-    "lib": ["es2022"],
+    "lib": ["es2022", "DOM"],
     "moduleDetection": "force",
     // We are not transpiling, so preserve our source code and do not emit files
     "module": "preserve",

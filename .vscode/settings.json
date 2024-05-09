@@ -1,6 +1,8 @@
 {
   "cSpell.words": [
-    "codesign"
+    "codesign",
+    "qrcode",
+    "undici"
   ],
   "prettier.enable": false,
   "editor.codeActionsOnSave": {
