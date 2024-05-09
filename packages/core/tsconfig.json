@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "lib": ["es2022"],
+    "moduleDetection": "force",
+    // We are not transpiling, so preserve our source code and do not emit files
+    "module": "preserve",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    // Enable strict type checking so you can catch bugs early
+    "strict": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    // Base Options recommended for all projects
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true
+  },
+
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"]
+}
