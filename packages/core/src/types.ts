@@ -3,7 +3,7 @@ export type TokenResp = { result: null | { token: string } }
 export type IonsParams = {
   project_id: string
   team_id: string
-  include: 'creator'
+  include: string
   per_page: number
   page: number
 }
@@ -15,8 +15,17 @@ export type BaseListResp<T> = {
   data: T[]
 }
 
-export type IconsResp = BaseListResp<{
+export type IconsItem = {
   svg: string
   name: string
   class_name: string
-}>
+}
+
+export type IconsResp = BaseListResp<IconsItem>
+
+export type BuildOptions = {
+  prefix: string
+  projectId: string
+  teamId: string
+  dist?: string
+}

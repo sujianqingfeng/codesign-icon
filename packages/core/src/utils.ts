@@ -1,4 +1,14 @@
-import type { IconsResp, IonsParams, TokenResp } from '../types'
+import type { IconsItem, IconsResp, IonsParams, TokenResp } from './types'
+import type { IconifyJSON } from '@iconify/types'
+import {
+  blankIconSet,
+  SVG,
+  cleanupSVG,
+  parseColors,
+  runSVGO,
+  isEmptyColor
+} from '@iconify/tools'
+
 import qrcode from 'qrcode-terminal'
 import { request } from 'undici'
 
@@ -75,4 +85,34 @@ export async function fetchCodesignIcons(
   const data = await body.json()
 
   return data as IconsResp
+}
+
+export function parseIcons(
+  icons: IconsItem[],
+  options: { prefix: string }
+): IconifyJSON {
+  const { prefix } = options
+  const iconSet = blankIconSet(prefix)
+
+  icons.forEach((icon) => {
+    const svg = new SVG(icon.svg)
+    cleanupSVG(svg)
+
+    parseColors(svg, {
+      defaultColor: 'currentColor',
+      callback: (attr, colorStr, color, item) => {
+        if (item === 'g') {
+          return 'unset'
+        }
+        return !color || isEmptyColor(color) ? 'currentColor' : colorStr
+        // return colorStr === 'none' ? 'currentColor' : colorStr
+      }
+    })
+
+    runSVGO(svg)
+
+    iconSet.fromSVG(icon.class_name, svg)
+  })
+
+  return iconSet.export()
 }

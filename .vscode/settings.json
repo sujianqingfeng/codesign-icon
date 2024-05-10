@@ -1,8 +1,13 @@
 {
   "cSpell.words": [
     "codesign",
+    "esno",
+    "iconify",
     "qrcode",
-    "undici"
+    "sujian",
+    "tsup",
+    "undici",
+    "unocss"
   ],
   "prettier.enable": false,
   "editor.codeActionsOnSave": {

@@ -1,19 +1,37 @@
 {
-  "name": "core",
+  "name": "@sujian/codesign-icon-core",
+  "type": "module",
   "version": "1.0.0",
-  "description": "",
-  "author": "",
-  "license": "ISC",
+  "description": "build codesign icons",
+  "author": "hens",
+  "license": "MIT",
   "keywords": [],
-  "main": "index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "dist/*.d.ts"
+  ],
   "scripts": {
-    "build": "esno src/build.ts"
+    "dev": "tsup --watch",
+    "build": "tsup"
+  },
+  "dependencies": {
+    "@iconify/tools": "^4.0.4",
+    "qrcode-terminal": "^0.12.0",
+    "undici": "^6.16.0"
   },
   "devDependencies": {
     "@types/qrcode-terminal": "^0.12.2",
-    "esno": "^4.7.0",
-    "qrcode-terminal": "^0.12.0",
-    "typescript": "^5.4.5",
-    "undici": "^6.16.0"
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.5"
   }
 }

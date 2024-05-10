@@ -9,7 +9,9 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest",
-    "dev": "pnpm run --filter core build"
+    "dev": "pnpm run --filter @sujian/codesign-icon-core dev",
+    "vue": "pnpm run --filter vue dev",
+    "build:base": "pnpm run --filter @sujian/icons-base build"
   },
   "devDependencies": {
     "@sujian/eslint-config": "^1.0.4",
