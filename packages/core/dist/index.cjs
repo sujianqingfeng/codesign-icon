@@ -77,16 +77,30 @@ function parseIcons(icons, options) {
   icons.forEach((icon) => {
     const svg = new tools.SVG(icon.svg);
     tools.cleanupSVG(svg);
-    tools.parseColors(svg, {
-      defaultColor: "currentColor",
-      callback: (_, colorStr, color) => {
-        return !color || tools.isEmptyColor(color) ? colorStr : "currentColor";
-      }
-    });
+    if (!isColors(svg.getBody())) {
+      tools.parseColors(svg, {
+        defaultColor: "currentColor",
+        callback: (_, colorStr, color) => {
+          return !color || tools.isEmptyColor(color) ? "currentColor" : colorStr;
+        }
+      });
+    }
     tools.runSVGO(svg);
     iconSet.fromSVG(icon.class_name, svg);
   });
   return iconSet.export();
+}
+function isColors(svg) {
+  const re = /fill="([^"]+)"/g;
+  const temp = [];
+  let match;
+  while ((match = re.exec(svg)) !== null) {
+    const value = match[1];
+    if (temp.indexOf(value) === -1) {
+      temp.push(value);
+    }
+  }
+  return temp.length > 1;
 }
 
 // src/index.ts

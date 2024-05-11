@@ -4,7 +4,9 @@ const names = Object.keys(base.icons).map((name) => `i-base-${name}`)
 </script>
 
 <template>
-  <div class="flex justify-start items-center color-red flex-wrap">
+  <div
+    class="flex justify-start items-center color-red flex-wrap gap-4 bg-gray-4"
+  >
     <button
       v-for="name in names"
       :key="name"

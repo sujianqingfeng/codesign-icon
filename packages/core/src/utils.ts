@@ -98,16 +98,14 @@ export function parseIcons(
     const svg = new SVG(icon.svg)
     cleanupSVG(svg)
 
-    parseColors(svg, {
-      defaultColor: 'currentColor',
-      callback: (attr, colorStr, color, item) => {
-        if (item === 'g') {
-          return 'unset'
+    if (!isColors(svg.getBody())) {
+      parseColors(svg, {
+        defaultColor: 'currentColor',
+        callback: (_, colorStr, color) => {
+          return !color || isEmptyColor(color) ? 'currentColor' : colorStr
         }
-        return !color || isEmptyColor(color) ? 'currentColor' : colorStr
-        // return colorStr === 'none' ? 'currentColor' : colorStr
-      }
-    })
+      })
+    }
 
     runSVGO(svg)
 
@@ -115,4 +113,17 @@ export function parseIcons(
   })
 
   return iconSet.export()
+}
+
+export function isColors(svg: string) {
+  const re = /fill="([^"]+)"/g
+  const temp = []
+  let match
+  while ((match = re.exec(svg)) !== null) {
+    const value = match[1]
+    if (temp.indexOf(value) === -1) {
+      temp.push(value)
+    }
+  }
+  return temp.length > 1
 }
