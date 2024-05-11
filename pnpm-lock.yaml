@@ -18,6 +18,12 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
 
+  examples/uniapp:
+    dependencies:
+      '@sujian/icons-base':
+        specifier: workspace:^
+        version: link:../../packages/base
+
   examples/vue:
     dependencies:
       '@unocss/reset':

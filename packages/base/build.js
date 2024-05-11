@@ -16,7 +16,8 @@ async function build() {
   const rawData = JSON.parse(text)
   buildUniAppIcons({
     rawData,
-    dist: 'uniapp/'
+    dist: 'uniapp/',
+    exportPrefix: 'I'
   })
 }
 

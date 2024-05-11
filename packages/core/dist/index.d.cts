@@ -9,6 +9,7 @@ type BuildIconifyJSONOptions = {
 type BuildUniAppIconsOptions = {
     rawData: IconifyJSON;
     dist: string;
+    exportPrefix?: string;
 };
 
 declare function buildIconifyJSON(options: BuildIconifyJSONOptions): Promise<void>;

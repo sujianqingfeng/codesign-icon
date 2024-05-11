@@ -165,10 +165,10 @@ export async function toSvgs(rawData: IconifyJSON) {
   return svgs as [string, IconifyIcon][]
 }
 
-export function generateUniAppTemplate(style: string) {
+export function generateUniAppTemplate(style: string, exportName: string) {
   const template = `<script>
   export default {
-    name: 'Icon',
+    name: '${exportName}',
     props: {
       color: {
         type: String,
@@ -208,7 +208,9 @@ export function generateStyle(isColors: boolean, uri: string) {
   } else {
     return {
       mask: `${uri} no-repeat`,
+      '-webkit-mask': `${uri} no-repeat`,
       'mask-size': '100% 100%',
+      '-webkit-mask-size': '100% 100%',
       'background-color': 'currentColor',
       height: '1em',
       width: '1em'

@@ -35,4 +35,5 @@ export type BuildIconifyJSONOptions = {
 export type BuildUniAppIconsOptions = {
   rawData: IconifyJSON
   dist: string
+  exportPrefix?: string
 }

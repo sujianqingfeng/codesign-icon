@@ -123,10 +123,10 @@ async function toSvgs(rawData) {
   });
   return svgs;
 }
-function generateUniAppTemplate(style) {
+function generateUniAppTemplate(style, exportName) {
   const template = `<script>
   export default {
-    name: 'Icon',
+    name: '${exportName}',
     props: {
       color: {
         type: String,
@@ -164,7 +164,9 @@ function generateStyle(isColors2, uri) {
   } else {
     return {
       mask: `${uri} no-repeat`,
+      "-webkit-mask": `${uri} no-repeat`,
       "mask-size": "100% 100%",
+      "-webkit-mask-size": "100% 100%",
       "background-color": "currentColor",
       height: "1em",
       width: "1em"
@@ -208,9 +210,10 @@ async function buildIconifyJSON(options) {
   console.log("completed!");
 }
 async function buildUniAppIcons(options) {
-  const { rawData, dist } = options;
+  const { rawData, dist, exportPrefix } = options;
   const svgs = await toSvgs(rawData);
   await fs.promises.mkdir(dist, { recursive: true });
+  const exportLines = [];
   svgs.forEach(async ([name, icon]) => {
     const svg = utils.iconToHTML(icon.body, {
       viewBox: `${icon.left || 0} ${icon.top || 0} ${icon.width} ${icon.height}`,
@@ -218,11 +221,16 @@ async function buildUniAppIcons(options) {
       height: icon.height ? icon.height.toString() : "auto"
     });
     const url = utils.svgToURL(svg);
-    const style = generateStyle(isColors(svg), url);
-    const template = generateUniAppTemplate(JSON.stringify(style));
     const CamelCase = toCamelCase(name);
-    await fs.promises.writeFile(`${dist}${CamelCase}.vue`, template, "utf8");
+    const fileName = `${CamelCase}.vue`;
+    const exportName = `${exportPrefix}${CamelCase}`;
+    const path = `${dist}${fileName}`;
+    const style = generateStyle(isColors(svg), url);
+    const template = generateUniAppTemplate(JSON.stringify(style), exportName);
+    exportLines.push(`export { default as ${exportName} } from './${fileName}'`);
+    await fs.promises.writeFile(path, template, "utf8");
   });
+  await fs.promises.writeFile(`${dist}index.js`, exportLines.join("\n"), "utf8");
 }
 
 exports.buildIconifyJSON = buildIconifyJSON;

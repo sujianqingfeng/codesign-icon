@@ -4,7 +4,6 @@ import { iconToHTML, svgToURL } from '@iconify/utils'
 import {
   generateUniAppTemplate,
   createMaxIntervalFn,
-  encodeSvg,
   fetchCodesignIcons,
   fetchToken,
   generateKey,
@@ -61,11 +60,12 @@ export async function buildIconifyJSON(options: BuildIconifyJSONOptions) {
 }
 
 export async function buildUniAppIcons(options: BuildUniAppIconsOptions) {
-  const { rawData, dist } = options
+  const { rawData, dist, exportPrefix } = options
   const svgs = await toSvgs(rawData)
 
   await fs.mkdir(dist, { recursive: true })
 
+  const exportLines = []
   svgs.forEach(async ([name, icon]) => {
     // Get SVG
     const svg = iconToHTML(icon.body, {
@@ -74,13 +74,21 @@ export async function buildUniAppIcons(options: BuildUniAppIconsOptions) {
       height: icon.height ? icon.height.toString() : 'auto'
     })
 
-    // // Generate URL
+    // Generate URL
     const url = svgToURL(svg)
 
-    const style = generateStyle(isColors(svg), url)
-    const template = generateUniAppTemplate(JSON.stringify(style))
     const CamelCase = toCamelCase(name)
 
-    await fs.writeFile(`${dist}${CamelCase}.vue`, template, 'utf8')
+    const fileName = `${CamelCase}.vue`
+    const exportName = `${exportPrefix}${CamelCase}`
+    const path = `${dist}${fileName}`
+
+    const style = generateStyle(isColors(svg), url)
+    const template = generateUniAppTemplate(JSON.stringify(style), exportName)
+
+    exportLines.push(`export { default as ${exportName} } from './${fileName}'`)
+    await fs.writeFile(path, template, 'utf8')
   })
+
+  await fs.writeFile(`${dist}index.js`, exportLines.join('\n'), 'utf8')
 }

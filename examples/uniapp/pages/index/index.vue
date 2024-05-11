@@ -1,12 +1,13 @@
 <script>
-import Icon from '../../components/AccountApply.vue'
+import * as icons from '@sujian/icons-base/uniapp'
 export default {
   components: {
-    Icon
+    ...icons
   },
   data() {
     return {
-      title: 'Hello'
+      title: 'Hello',
+      icons
     }
   },
   onLoad() {},
@@ -16,8 +17,20 @@ export default {
 
 <template>
   <view class="content">
-    <Icon color="red" size="100rpx" />
+    <component
+      :is="icon"
+      v-for="icon in icons"
+      :key="icon"
+      color="red"
+      size="40rpx"
+    />
   </view>
 </template>
 
-<style></style>
+<style>
+.content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+</style>
