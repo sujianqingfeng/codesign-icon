@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@iconify/tools": "^4.0.4",
+    "@iconify/utils": "^2.1.23",
     "qrcode-terminal": "^0.12.0",
     "undici": "^6.16.0"
   },

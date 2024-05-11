@@ -1,10 +1,10 @@
 import { describe, test, expect } from 'vitest'
 
-import { build } from '../index'
+import { buildIconifyJSON } from '../index'
 
 describe('build', () => {
   test.skip('start', () => {
-    build({
+    buildIconifyJSON({
       prefix: 'test',
       projectId: 'lnGaV96la6ZPqwd',
       teamId: 'qxWyZ1ybLDZmVXk'

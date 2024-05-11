@@ -1,3 +1,5 @@
+import type { IconifyJSON } from '@iconify/types'
+
 export type TokenResp = { result: null | { token: string } }
 
 export type IonsParams = {
@@ -23,9 +25,14 @@ export type IconsItem = {
 
 export type IconsResp = BaseListResp<IconsItem>
 
-export type BuildOptions = {
+export type BuildIconifyJSONOptions = {
   prefix: string
   projectId: string
   teamId: string
   dist?: string
+}
+
+export type BuildUniAppIconsOptions = {
+  rawData: IconifyJSON
+  dist: string
 }

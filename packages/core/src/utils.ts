@@ -1,14 +1,18 @@
 import type { IconsItem, IconsResp, IonsParams, TokenResp } from './types'
-import type { IconifyJSON } from '@iconify/types'
+import type { IconifyJSON, IconifyIcon } from '@iconify/types'
 import {
   blankIconSet,
   SVG,
   cleanupSVG,
   parseColors,
   runSVGO,
-  isEmptyColor
+  isEmptyColor,
+  IconSet
 } from '@iconify/tools'
 
+import { validateIconSet } from '@iconify/utils'
+import { encodeSvgForCss } from '@iconify/utils/lib/svg/encode-svg-for-css'
+// import { loadIcon } from '@iconify/utils/lib/loader/loader'
 import qrcode from 'qrcode-terminal'
 import { request } from 'undici'
 
@@ -109,7 +113,8 @@ export function parseIcons(
 
     runSVGO(svg)
 
-    iconSet.fromSVG(icon.class_name, svg)
+    const name = covertValidName(icon.class_name)
+    iconSet.fromSVG(name, svg)
   })
 
   return iconSet.export()
@@ -126,4 +131,87 @@ export function isColors(svg: string) {
     }
   }
   return temp.length > 1
+}
+
+export function covertValidName(text: string) {
+  return text.replaceAll('_', '-').replace(/\s+/g, '-').toLowerCase()
+}
+
+export function toCamelCase(str) {
+  return str
+    .replace(/[-_]+/g, ' ')
+    .toLowerCase()
+    .replace(/(\b\w)/g, (char) => char.toUpperCase())
+    .replace(/\s+/g, '')
+}
+
+export function encodeSvg(svg: string) {
+  const r = encodeSvgForCss(svg)
+  return `data:image/svg+xml;base64,${r}`
+}
+
+export async function toSvgs(rawData: IconifyJSON) {
+  const validatedData = validateIconSet(rawData)
+  const iconSet = new IconSet(validatedData)
+
+  const svgs = []
+  await iconSet.forEach(async (name) => {
+    const icon = iconSet.resolve(name)
+    if (icon) {
+      svgs.push([name, icon])
+    }
+  })
+
+  return svgs as [string, IconifyIcon][]
+}
+
+export function generateUniAppTemplate(style: string) {
+  const template = `<script>
+  export default {
+    name: 'Icon',
+    props: {
+      color: {
+        type: String,
+        default: 'currentColor'
+      },
+      size: {
+        type: String,
+        default: '1em'
+      }
+    },
+    data(){
+      return {
+        style: ${style}
+      }
+    }
+  }
+  </script>
+  <template>
+    <view :style="{ fontSize: size, color: color }">
+      <view :style="style"/>
+    </view>
+  </template>
+  `
+  return template
+}
+
+export function generateStyle(isColors: boolean, uri: string) {
+  // const uri = `url("${url}")`
+  if (isColors) {
+    return {
+      background: `${uri} no-repeat`,
+      'background-size': '100% 100%',
+      'background-color': 'transparent',
+      height: '1em',
+      width: '1em'
+    }
+  } else {
+    return {
+      mask: `${uri} no-repeat`,
+      'mask-size': '100% 100%',
+      'background-color': 'currentColor',
+      height: '1em',
+      width: '1em'
+    }
+  }
 }

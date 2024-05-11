@@ -1,15 +1,22 @@
-import type { BuildOptions } from './types'
+import type { BuildIconifyJSONOptions, BuildUniAppIconsOptions } from './types'
 import { promises as fs } from 'fs'
+import { iconToHTML, svgToURL } from '@iconify/utils'
 import {
+  generateUniAppTemplate,
   createMaxIntervalFn,
+  encodeSvg,
   fetchCodesignIcons,
   fetchToken,
   generateKey,
   generateQrCode,
-  parseIcons
+  generateStyle,
+  isColors,
+  parseIcons,
+  toSvgs,
+  toCamelCase
 } from './utils'
 
-export async function build(options: BuildOptions) {
+export async function buildIconifyJSON(options: BuildIconifyJSONOptions) {
   const { prefix, projectId, teamId, dist = '' } = options
 
   const key = generateKey()
@@ -51,4 +58,29 @@ export async function build(options: BuildOptions) {
   await fs.writeFile(`${dist}${prefix}.json`, exported, 'utf8')
 
   console.log('completed!')
+}
+
+export async function buildUniAppIcons(options: BuildUniAppIconsOptions) {
+  const { rawData, dist } = options
+  const svgs = await toSvgs(rawData)
+
+  await fs.mkdir(dist, { recursive: true })
+
+  svgs.forEach(async ([name, icon]) => {
+    // Get SVG
+    const svg = iconToHTML(icon.body, {
+      viewBox: `${icon.left || 0} ${icon.top || 0} ${icon.width} ${icon.height}`,
+      width: icon.width ? icon.width.toString() : 'auto',
+      height: icon.height ? icon.height.toString() : 'auto'
+    })
+
+    // // Generate URL
+    const url = svgToURL(svg)
+
+    const style = generateStyle(isColors(svg), url)
+    const template = generateUniAppTemplate(JSON.stringify(style))
+    const CamelCase = toCamelCase(name)
+
+    await fs.writeFile(`${dist}${CamelCase}.vue`, template, 'utf8')
+  })
 }
