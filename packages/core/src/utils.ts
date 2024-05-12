@@ -12,7 +12,6 @@ import {
 
 import { validateIconSet } from '@iconify/utils'
 import { encodeSvgForCss } from '@iconify/utils/lib/svg/encode-svg-for-css'
-// import { loadIcon } from '@iconify/utils/lib/loader/loader'
 import qrcode from 'qrcode-terminal'
 import { request } from 'undici'
 
@@ -121,16 +120,16 @@ export function parseIcons(
 }
 
 export function isColors(svg: string) {
-  const re = /fill="([^"]+)"/g
+  const re = /(stroke|fill)="([^"]+)"/g
   const temp = []
   let match
   while ((match = re.exec(svg)) !== null) {
-    const value = match[1]
+    const value = match[2]
     if (temp.indexOf(value) === -1) {
       temp.push(value)
     }
   }
-  return temp.length > 1
+  return temp.filter((item) => !['none'].includes(item)).length > 1
 }
 
 export function covertValidName(text: string) {

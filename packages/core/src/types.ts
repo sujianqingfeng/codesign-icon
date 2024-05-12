@@ -27,13 +27,17 @@ export type IconsResp = BaseListResp<IconsItem>
 
 export type BuildIconifyJSONOptions = {
   prefix: string
-  projectId: string
-  teamId: string
-  dist?: string
+  icons: IconsItem[]
 }
 
 export type BuildUniAppIconsOptions = {
   rawData: IconifyJSON
   dist: string
   exportPrefix?: string
+}
+
+export type FetchIconsParams = {
+  token: string
+  projectId: string
+  teamId: string
 }

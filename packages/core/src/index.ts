@@ -1,4 +1,8 @@
-import type { BuildIconifyJSONOptions, BuildUniAppIconsOptions } from './types'
+import type {
+  BuildIconifyJSONOptions,
+  BuildUniAppIconsOptions,
+  FetchIconsParams
+} from './types'
 import { promises as fs } from 'fs'
 import { iconToHTML, svgToURL } from '@iconify/utils'
 import {
@@ -15,9 +19,7 @@ import {
   toCamelCase
 } from './utils'
 
-export async function buildIconifyJSON(options: BuildIconifyJSONOptions) {
-  const { prefix, projectId, teamId, dist = '' } = options
-
+export async function fetchCodesignToken() {
   const key = generateKey()
   const url = `https://codesign.qq.com/login/${key}`
   generateQrCode(url)
@@ -29,8 +31,11 @@ export async function buildIconifyJSON(options: BuildIconifyJSONOptions) {
     }
   })) as string
 
-  console.log('token:', token)
+  return token
+}
 
+export async function fetchCodesignIconsByToken(options: FetchIconsParams) {
+  const { token, projectId, teamId } = options
   const icons = await fetchCodesignIcons({
     project_id: projectId,
     team_id: teamId,
@@ -48,15 +53,15 @@ export async function buildIconifyJSON(options: BuildIconifyJSONOptions) {
     throw new Error('icons is empty')
   }
 
-  const data = parseIcons(icons.data, {
+  return icons.data
+}
+
+export async function buildIconifyJSON(options: BuildIconifyJSONOptions) {
+  const { prefix, icons } = options
+  const data = parseIcons(icons, {
     prefix
   })
-
-  const exported = `${JSON.stringify(data, null, '\t')}\n`
-
-  await fs.writeFile(`${dist}${prefix}.json`, exported, 'utf8')
-
-  console.log('completed!')
+  return data
 }
 
 export async function buildUniAppIcons(options: BuildUniAppIconsOptions) {
@@ -68,10 +73,11 @@ export async function buildUniAppIcons(options: BuildUniAppIconsOptions) {
   const exportLines = []
   svgs.forEach(async ([name, icon]) => {
     // Get SVG
+    const { height = 16, width = 16 } = icon
     const svg = iconToHTML(icon.body, {
-      viewBox: `${icon.left || 0} ${icon.top || 0} ${icon.width} ${icon.height}`,
-      width: icon.width ? icon.width.toString() : 'auto',
-      height: icon.height ? icon.height.toString() : 'auto'
+      viewBox: `${icon.left || 0} ${icon.top || 0} ${width} ${height}`,
+      width: `${width}`,
+      height: `${height}`
     })
 
     // Generate URL

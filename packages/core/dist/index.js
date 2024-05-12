@@ -88,16 +88,16 @@ function parseIcons(icons, options) {
   return iconSet.export();
 }
 function isColors(svg) {
-  const re = /fill="([^"]+)"/g;
+  const re = /(stroke|fill)="([^"]+)"/g;
   const temp = [];
   let match;
   while ((match = re.exec(svg)) !== null) {
-    const value = match[1];
+    const value = match[2];
     if (temp.indexOf(value) === -1) {
       temp.push(value);
     }
   }
-  return temp.length > 1;
+  return temp.filter((item) => !["none"].includes(item)).length > 1;
 }
 function covertValidName(text) {
   return text.replaceAll("_", "-").replace(/\s+/g, "-").toLowerCase();
@@ -169,8 +169,7 @@ function generateStyle(isColors2, uri) {
 }
 
 // src/index.ts
-async function buildIconifyJSON(options) {
-  const { prefix, projectId, teamId, dist = "" } = options;
+async function fetchCodesignToken() {
   const key = generateKey();
   const url = `https://codesign.qq.com/login/${key}`;
   generateQrCode(url);
@@ -180,7 +179,10 @@ async function buildIconifyJSON(options) {
       return fetchToken(key);
     }
   });
-  console.log("token:", token);
+  return token;
+}
+async function fetchCodesignIconsByToken(options) {
+  const { token, projectId, teamId } = options;
   const icons = await fetchCodesignIcons({
     project_id: projectId,
     team_id: teamId,
@@ -195,13 +197,14 @@ async function buildIconifyJSON(options) {
   if (!icons.data.length) {
     throw new Error("icons is empty");
   }
-  const data = parseIcons(icons.data, {
+  return icons.data;
+}
+async function buildIconifyJSON(options) {
+  const { prefix, icons } = options;
+  const data = parseIcons(icons, {
     prefix
   });
-  const exported = `${JSON.stringify(data, null, "	")}
-`;
-  await promises.writeFile(`${dist}${prefix}.json`, exported, "utf8");
-  console.log("completed!");
+  return data;
 }
 async function buildUniAppIcons(options) {
   const { rawData, dist, exportPrefix } = options;
@@ -209,10 +212,11 @@ async function buildUniAppIcons(options) {
   await promises.mkdir(dist, { recursive: true });
   const exportLines = [];
   svgs.forEach(async ([name, icon]) => {
+    const { height = 16, width = 16 } = icon;
     const svg = iconToHTML(icon.body, {
-      viewBox: `${icon.left || 0} ${icon.top || 0} ${icon.width} ${icon.height}`,
-      width: icon.width ? icon.width.toString() : "auto",
-      height: icon.height ? icon.height.toString() : "auto"
+      viewBox: `${icon.left || 0} ${icon.top || 0} ${width} ${height}`,
+      width: `${width}`,
+      height: `${height}`
     });
     const url = svgToURL(svg);
     const CamelCase = toCamelCase(name);
@@ -227,4 +231,4 @@ async function buildUniAppIcons(options) {
   await promises.writeFile(`${dist}index.js`, exportLines.join("\n"), "utf8");
 }
 
-export { buildIconifyJSON, buildUniAppIcons };
+export { buildIconifyJSON, buildUniAppIcons, fetchCodesignIconsByToken, fetchCodesignToken };
