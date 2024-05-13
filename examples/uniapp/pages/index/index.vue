@@ -7,18 +7,32 @@ export default {
   data() {
     return {
       title: 'Hello',
-      icons
+      icons,
+      color: 'red'
     }
   },
-  onLoad() {},
-  methods: {}
+  onLoad() {
+    setInterval(() => {
+      this.color = this.getRandomColor()
+    }, 1000)
+  },
+  methods: {
+    getRandomColor() {
+      const letters = '0123456789ABCDEF'
+      let color = '#'
+      for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)]
+      }
+      return color
+    }
+  }
 }
 </script>
 
 <template>
   <view class="content">
     <view v-for="icon in icons" :key="icon" class="item">
-      <component :is="icon" color="red" size="50rpx" />
+      <component :is="icon" :color="color" size="50rpx" />
       <!-- <view>{{ icon.name }}</view> -->
     </view>
   </view>

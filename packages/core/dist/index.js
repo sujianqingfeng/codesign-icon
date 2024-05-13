@@ -1,7 +1,6 @@
 import { promises } from 'fs';
 import { iconToHTML, svgToURL, validateIconSet } from '@iconify/utils';
-import { blankIconSet, SVG, cleanupSVG, parseColors, isEmptyColor, runSVGO, IconSet } from '@iconify/tools';
-import '@iconify/utils/lib/svg/encode-svg-for-css';
+import { blankIconSet, SVG, cleanupSVG, parseColors, runSVGO, IconSet } from '@iconify/tools';
 import qrcode from 'qrcode-terminal';
 import { request } from 'undici';
 
@@ -73,11 +72,12 @@ function parseIcons(icons, options) {
   icons.forEach((icon) => {
     const svg = new SVG(icon.svg);
     cleanupSVG(svg);
-    if (!isColors(svg.getBody())) {
+    const body = svg.getBody();
+    if (!isColors(body)) {
       parseColors(svg, {
         defaultColor: "currentColor",
-        callback: (_, colorStr, color) => {
-          return !color || isEmptyColor(color) ? "currentColor" : colorStr;
+        callback: () => {
+          return "currentColor";
         }
       });
     }

@@ -6,12 +6,10 @@ import {
   cleanupSVG,
   parseColors,
   runSVGO,
-  isEmptyColor,
   IconSet
 } from '@iconify/tools'
 
 import { validateIconSet } from '@iconify/utils'
-import { encodeSvgForCss } from '@iconify/utils/lib/svg/encode-svg-for-css'
 import qrcode from 'qrcode-terminal'
 import { request } from 'undici'
 
@@ -101,11 +99,12 @@ export function parseIcons(
     const svg = new SVG(icon.svg)
     cleanupSVG(svg)
 
-    if (!isColors(svg.getBody())) {
+    const body = svg.getBody()
+    if (!isColors(body)) {
       parseColors(svg, {
         defaultColor: 'currentColor',
-        callback: (_, colorStr, color) => {
-          return !color || isEmptyColor(color) ? 'currentColor' : colorStr
+        callback: () => {
+          return 'currentColor'
         }
       })
     }
@@ -142,11 +141,6 @@ export function toCamelCase(str) {
     .toLowerCase()
     .replace(/(\b\w)/g, (char) => char.toUpperCase())
     .replace(/\s+/g, '')
-}
-
-export function encodeSvg(svg: string) {
-  const r = encodeSvgForCss(svg)
-  return `data:image/svg+xml;base64,${r}`
 }
 
 export async function toSvgs(rawData: IconifyJSON) {

@@ -3,7 +3,6 @@
 var fs = require('fs');
 var utils = require('@iconify/utils');
 var tools = require('@iconify/tools');
-require('@iconify/utils/lib/svg/encode-svg-for-css');
 var qrcode = require('qrcode-terminal');
 var undici = require('undici');
 
@@ -79,11 +78,12 @@ function parseIcons(icons, options) {
   icons.forEach((icon) => {
     const svg = new tools.SVG(icon.svg);
     tools.cleanupSVG(svg);
-    if (!isColors(svg.getBody())) {
+    const body = svg.getBody();
+    if (!isColors(body)) {
       tools.parseColors(svg, {
         defaultColor: "currentColor",
-        callback: (_, colorStr, color) => {
-          return !color || tools.isEmptyColor(color) ? "currentColor" : colorStr;
+        callback: () => {
+          return "currentColor";
         }
       });
     }
