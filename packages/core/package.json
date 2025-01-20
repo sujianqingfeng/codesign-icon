@@ -24,14 +24,19 @@
     "dev": "tsup --watch",
     "build": "tsup"
   },
+  "peerDependencies": {
+    "webpack": "^4.0.0 || ^5.0.0"
+  },
   "dependencies": {
     "@iconify/tools": "^4.0.4",
     "@iconify/utils": "^2.1.23",
     "qrcode-terminal": "^0.12.0",
-    "undici": "^6.16.0"
+    "undici": "^6.16.0",
+    "webpack-virtual-modules": "^0.6.1"
   },
   "devDependencies": {
     "@types/qrcode-terminal": "^0.12.2",
+    "@types/webpack": "^5.28.5",
     "tsup": "^8.0.2",
     "typescript": "^5.4.5"
   }

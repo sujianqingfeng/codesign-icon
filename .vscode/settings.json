@@ -8,7 +8,9 @@
     "svgs",
     "tsup",
     "undici",
-    "unocss"
+    "uniapp",
+    "unocss",
+    "unplugin"
   ],
   "prettier.enable": false,
   "editor.codeActionsOnSave": {

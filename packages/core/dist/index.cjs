@@ -5,10 +5,14 @@ var utils = require('@iconify/utils');
 var tools = require('@iconify/tools');
 var qrcode = require('qrcode-terminal');
 var undici = require('undici');
+var path = require('path');
+var VirtualModulesPlugin = require('webpack-virtual-modules');
 
 function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
 
 var qrcode__default = /*#__PURE__*/_interopDefault(qrcode);
+var path__default = /*#__PURE__*/_interopDefault(path);
+var VirtualModulesPlugin__default = /*#__PURE__*/_interopDefault(VirtualModulesPlugin);
 
 // src/index.ts
 function generateKey(len = 16) {
@@ -173,6 +177,85 @@ function generateStyle(isColors2, uri) {
     };
   }
 }
+var UniappIconPlugin = class {
+  options;
+  icons;
+  virtualModules;
+  constructor(options) {
+    this.options = options;
+    this.icons = /* @__PURE__ */ new Map();
+    this.virtualModules = new VirtualModulesPlugin__default.default({});
+  }
+  async init() {
+    const prefix = this.options.prefix || "Icon";
+    const svgs = await toSvgs(this.options.data);
+    for (const [name, icon] of svgs) {
+      const { height = 16, width = 16 } = icon;
+      const svg = utils.iconToHTML(icon.body, {
+        viewBox: `${icon.left || 0} ${icon.top || 0} ${width} ${height}`,
+        width: `${width}`,
+        height: `${height}`
+      });
+      const url = utils.svgToURL(svg);
+      const componentName = `${prefix}${name}`;
+      const style = generateStyle(isColors(svg), url);
+      const template = generateUniAppTemplate(
+        JSON.stringify(style),
+        componentName
+      );
+      const modulePath = path__default.default.resolve(__dirname, `virtual/${componentName}.vue`);
+      this.virtualModules.writeModule(modulePath, template);
+      this.icons.set(componentName, modulePath);
+    }
+  }
+  apply(compiler) {
+    this.virtualModules.apply(compiler);
+    compiler.options.resolve = compiler.options.resolve || {};
+    compiler.options.resolve.alias = compiler.options.resolve.alias || {};
+    compiler.options.resolve.alias["virtual-icon"] = path__default.default.resolve(
+      __dirname,
+      "virtual"
+    );
+    compiler.hooks.beforeRun.tapPromise("UniappIconPlugin", async () => {
+      await this.init();
+    });
+    compiler.hooks.watchRun.tapPromise("UniappIconPlugin", async () => {
+      await this.init();
+    });
+    compiler.hooks.normalModuleFactory.tap(
+      "UniappIconPlugin",
+      (normalModuleFactory) => {
+        normalModuleFactory.hooks.beforeResolve.tap(
+          "UniappIconPlugin",
+          (resolveData) => {
+            if (!resolveData) {
+              return;
+            }
+            const request2 = resolveData.request;
+            if (request2.startsWith("virtual:icon/")) {
+              const iconName = request2.slice("virtual:icon/".length);
+              const modulePath = this.icons.get(iconName);
+              if (modulePath) {
+                resolveData.request = path__default.default.relative(
+                  path__default.default.dirname(resolveData.contextInfo.issuer),
+                  modulePath
+                );
+                console.log("Resolved virtual module:", {
+                  from: request2,
+                  to: resolveData.request
+                });
+              } else {
+                console.warn(`Icon not found: ${iconName}`);
+                console.warn("Available icons:", Array.from(this.icons.keys()));
+              }
+            }
+          }
+        );
+      }
+    );
+  }
+};
+var webpack_uniapp_icon_default = UniappIconPlugin;
 
 // src/index.ts
 async function fetchCodesignToken() {
@@ -228,15 +311,16 @@ async function buildUniAppIcons(options) {
     const CamelCase = toCamelCase(name);
     const fileName = `${CamelCase}.vue`;
     const exportName = `${exportPrefix}${CamelCase}`;
-    const path = `${dist}${fileName}`;
+    const path2 = `${dist}${fileName}`;
     const style = generateStyle(isColors(svg), url);
     const template = generateUniAppTemplate(JSON.stringify(style), exportName);
     exportLines.push(`export { default as ${exportName} } from './${fileName}'`);
-    await fs.promises.writeFile(path, template, "utf8");
+    await fs.promises.writeFile(path2, template, "utf8");
   });
   await fs.promises.writeFile(`${dist}index.js`, exportLines.join("\n"), "utf8");
 }
 
+exports.WebpackIconPlugin = webpack_uniapp_icon_default;
 exports.buildIconifyJSON = buildIconifyJSON;
 exports.buildUniAppIcons = buildUniAppIcons;
 exports.fetchCodesignIconsByToken = fetchCodesignIconsByToken;

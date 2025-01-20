@@ -11,7 +11,8 @@
     "test": "vitest",
     "dev": "pnpm run --filter @sujian/codesign-icon-core dev",
     "vue": "pnpm run --filter vue dev",
-    "build:base": "pnpm run --filter @sujian/icons-base build"
+    "build:base": "pnpm run --filter @sujian/icons-base build",
+    "build:core": "pnpm run --filter @sujian/codesign-icon-core build"
   },
   "devDependencies": {
     "@sujian/eslint-config": "^1.0.4",

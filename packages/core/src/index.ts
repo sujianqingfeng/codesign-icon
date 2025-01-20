@@ -98,3 +98,6 @@ export async function buildUniAppIcons(options: BuildUniAppIconsOptions) {
 
   await fs.writeFile(`${dist}index.js`, exportLines.join('\n'), 'utf8')
 }
+
+export { default as WebpackIconPlugin } from './webpack-uniapp-icon'
+export * from './types'

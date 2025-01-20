@@ -5,5 +5,6 @@ export default defineConfig({
   clean: true,
   dts: true,
   treeshake: true,
-  format: ['cjs', 'esm']
+  format: ['cjs', 'esm'],
+  external: ['webpack']
 })

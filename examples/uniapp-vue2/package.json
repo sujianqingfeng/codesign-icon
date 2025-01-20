@@ -1,0 +1,20 @@
+{
+  "name": "uniapp-vue2-demo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "uni",
+    "build": "uni build",
+    "type-check": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "vue": "^2.6.14"
+  },
+  "devDependencies": {
+    "@sujian/codesign-icon-core": "workspace:^",
+    "@iconify/tools": "^4.0.4",
+    "@iconify/utils": "^2.1.23",
+    "qrcode-terminal": "^0.12.0",
+    "undici": "^6.16.0"
+  }
+}

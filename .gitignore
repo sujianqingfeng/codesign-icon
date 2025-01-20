@@ -1,3 +1,4 @@
 node_modules
 unpackage
-uniapp
+packages/base/uniapp
+.DS_Store
