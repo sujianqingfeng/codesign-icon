@@ -12,10 +12,13 @@
     "dev": "pnpm run --filter @sujian/codesign-icon-core dev",
     "vue": "pnpm run --filter vue dev",
     "build:base": "pnpm run --filter @sujian/icons-base build",
-    "build:core": "pnpm run --filter @sujian/codesign-icon-core build"
+    "build:core": "pnpm run --filter @sujian/codesign-icon-core build",
+    "release": "pnpm publish --filter @sujian/codesign-icon-core --no-git-checks --access public",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s"
   },
   "devDependencies": {
     "@sujian/eslint-config": "^1.0.4",
+    "conventional-changelog-cli": "^5.0.0",
     "eslint": "^8.54.0",
     "vitest": "^1.6.0"
   }
