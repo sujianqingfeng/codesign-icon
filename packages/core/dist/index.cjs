@@ -5,12 +5,11 @@ var utils = require('@iconify/utils');
 var tools = require('@iconify/tools');
 var undici = require('undici');
 var path = require('path');
-var VirtualModulesPlugin = require('webpack-virtual-modules');
 
 function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
 
+var fs__default = /*#__PURE__*/_interopDefault(fs);
 var path__default = /*#__PURE__*/_interopDefault(path);
-var VirtualModulesPlugin__default = /*#__PURE__*/_interopDefault(VirtualModulesPlugin);
 
 // src/index.ts
 function createMaxIntervalFn({
@@ -291,14 +290,31 @@ async function getWeworkLoginToken() {
 var UniappIconPlugin = class {
   options;
   icons;
-  virtualModules;
+  initialized = false;
+  projectRoot;
+  outputDir;
   constructor(options) {
     this.options = options;
     this.icons = /* @__PURE__ */ new Map();
-    this.virtualModules = new VirtualModulesPlugin__default.default({});
+    this.projectRoot = options.root || process.cwd();
+    this.outputDir = path__default.default.resolve(
+      this.projectRoot,
+      "node_modules",
+      ".icon-components"
+    );
   }
   async init() {
-    const prefix = this.options.prefix || "";
+    if (this.initialized) {
+      return;
+    }
+    try {
+      if (!fs__default.default.existsSync(this.outputDir)) {
+        fs__default.default.mkdirSync(this.outputDir, { recursive: true });
+      }
+    } catch (error) {
+      console.error("Error creating output directory:", error);
+      return;
+    }
     const svgs = await toSvgs(this.options.data);
     for (const [name, icon] of svgs) {
       const { height = 16, width = 16 } = icon;
@@ -308,49 +324,74 @@ var UniappIconPlugin = class {
         height: `${height}`
       });
       const url = utils.svgToURL(svg);
-      const componentName = `${prefix}${name}`;
+      const componentName = `${this.options.prefix || ""}${name}`;
       const style = generateStyle(isColors(svg), url);
       const template = generateUniAppTemplate(
         JSON.stringify(style),
         componentName
       );
-      const modulePath = path__default.default.resolve(__dirname, `virtual/${componentName}.vue`);
-      this.virtualModules.writeModule(modulePath, template);
-      this.icons.set(componentName, modulePath);
+      const filePath = path__default.default.join(this.outputDir, `${componentName}.vue`);
+      try {
+        fs__default.default.writeFileSync(filePath, template, "utf-8");
+      } catch (error) {
+        console.error(`Error writing file ${filePath}:`, error);
+        continue;
+      }
+      this.icons.set(componentName, `${componentName}.vue`);
     }
+    const indexContent = Array.from(this.icons.entries()).map(
+      ([name, fileName]) => `export { default as ${name} } from './${fileName}'`
+    ).join("\n");
+    try {
+      fs__default.default.writeFileSync(
+        path__default.default.join(this.outputDir, "index.js"),
+        indexContent,
+        "utf-8"
+      );
+    } catch (error) {
+      console.error("Error writing index.js:", error);
+    }
+    const packageJson = {
+      name: "@virtual/icons",
+      version: "1.0.0",
+      private: true
+    };
+    try {
+      fs__default.default.writeFileSync(
+        path__default.default.join(this.outputDir, "package.json"),
+        JSON.stringify(packageJson, null, 2),
+        "utf-8"
+      );
+    } catch (error) {
+      console.error("Error writing package.json:", error);
+    }
+    this.initialized = true;
   }
   apply(compiler) {
-    this.virtualModules.apply(compiler);
-    compiler.options.resolve = compiler.options.resolve || {};
-    compiler.options.resolve.alias = compiler.options.resolve.alias || {};
-    compiler.options.resolve.alias["virtual-icon"] = path__default.default.resolve(
-      __dirname,
-      "virtual"
-    );
     compiler.hooks.beforeRun.tapPromise("UniappIconPlugin", async () => {
       await this.init();
     });
     compiler.hooks.watchRun.tapPromise("UniappIconPlugin", async () => {
       await this.init();
     });
+    compiler.options.resolve = compiler.options.resolve || {};
+    compiler.options.resolve.alias = compiler.options.resolve.alias || {};
+    compiler.options.resolve.alias["virtual:icon"] = this.outputDir;
     compiler.hooks.normalModuleFactory.tap(
       "UniappIconPlugin",
       (normalModuleFactory) => {
         normalModuleFactory.hooks.beforeResolve.tap(
           "UniappIconPlugin",
           (resolveData) => {
-            if (!resolveData) {
+            if (!resolveData || !resolveData.request) {
               return;
             }
             const request2 = resolveData.request;
             if (request2.startsWith("virtual:icon/")) {
               const iconName = request2.slice("virtual:icon/".length);
-              const modulePath = this.icons.get(iconName);
-              if (modulePath) {
-                resolveData.request = path__default.default.relative(
-                  path__default.default.dirname(resolveData.contextInfo.issuer),
-                  modulePath
-                );
+              const fileName = this.icons.get(iconName);
+              if (fileName) {
+                resolveData.request = path__default.default.join(this.outputDir, fileName);
               } else {
                 console.warn(`Icon not found: ${iconName}`);
                 console.warn("Available icons:", Array.from(this.icons.keys()));

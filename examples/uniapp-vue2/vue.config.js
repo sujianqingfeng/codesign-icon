@@ -2,7 +2,6 @@
 // const UniappIcon = require('../../packages/core/dist/unplugin-uniapp-icon')
 // console.log('🚀 ~ iconData:', iconData)
 
-const path = require('path')
 const iconData = require('../../packages/base/output/base.json')
 const { WebpackIconPlugin } = require('../../packages/core/dist/index.cjs')
 
@@ -13,13 +12,9 @@ module.exports = {
     plugins: [
       new WebpackIconPlugin({
         data: iconData,
-        prefix: 'wxb-'
+        prefix: 'wxb-',
+        root: __dirname
       })
-    ],
-    resolve: {
-      alias: {
-        'virtual-icon': path.resolve(__dirname, 'node_modules/virtual-icon')
-      }
-    }
+    ]
   }
 }

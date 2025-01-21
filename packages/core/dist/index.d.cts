@@ -51,11 +51,17 @@ interface Options {
      * @default 'Icon'
      */
     prefix?: string;
+    /**
+     * Project root directory
+     */
+    root?: string;
 }
 declare class UniappIconPlugin {
     private readonly options;
     private readonly icons;
-    private virtualModules;
+    private initialized;
+    private projectRoot;
+    private outputDir;
     constructor(options: Options);
     init(): Promise<void>;
     apply(compiler: Compiler): void;
