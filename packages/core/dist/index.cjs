@@ -70,6 +70,7 @@ async function fetchCodesignIcons(params) {
       }
     }
   );
+  console.log("\u{1F680} ~ statusCode:", statusCode);
   if (statusCode !== 200) {
     return;
   }
@@ -280,6 +281,7 @@ async function fetchCodesignIconsByToken(options) {
     page: 1,
     Authorization: `Bearer ${token}`
   });
+  console.log("\u{1F680} ~ fetchCodesignIconsByToken ~ icons:", icons);
   if (!icons) {
     throw new Error("fetch icons failed");
   }

@@ -30,6 +30,7 @@
   "dependencies": {
     "@iconify/tools": "^4.0.4",
     "@iconify/utils": "^2.1.23",
+    "qrcode": "^1.5.3",
     "qrcode-terminal": "^0.12.0",
     "undici": "^6.16.0",
     "webpack-virtual-modules": "^0.6.1"
