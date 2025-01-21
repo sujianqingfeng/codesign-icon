@@ -7,32 +7,13 @@ import { promises as fs } from 'fs'
 import { iconToHTML, svgToURL } from '@iconify/utils'
 import {
   generateUniAppTemplate,
-  createMaxIntervalFn,
   fetchCodesignIcons,
-  fetchToken,
-  generateKey,
-  generateQrCode,
   generateStyle,
   isColors,
   parseIcons,
   toSvgs,
   toCamelCase
 } from './utils'
-
-export async function fetchCodesignToken() {
-  const key = generateKey()
-  const url = `https://codesign.qq.com/login/${key}`
-  generateQrCode(url)
-
-  const token = (await createMaxIntervalFn<string | null>({
-    fn: async () => {
-      console.log('fetching token...')
-      return fetchToken(key)
-    }
-  })) as string
-
-  return token
-}
 
 export async function fetchCodesignIconsByToken(options: FetchIconsParams) {
   const { token, projectId, teamId } = options
@@ -101,3 +82,4 @@ export async function buildUniAppIcons(options: BuildUniAppIconsOptions) {
 
 export { default as WebpackIconPlugin } from './webpack-uniapp-icon'
 export * from './types'
+export { getWeworkLoginToken } from './utils'

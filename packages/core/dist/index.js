@@ -1,23 +1,11 @@
 import { promises } from 'fs';
 import { iconToHTML, svgToURL, validateIconSet } from '@iconify/utils';
 import { blankIconSet, SVG, cleanupSVG, parseColors, runSVGO, IconSet } from '@iconify/tools';
-import qrcode from 'qrcode-terminal';
 import { request } from 'undici';
 import path from 'path';
 import VirtualModulesPlugin from 'webpack-virtual-modules';
 
 // src/index.ts
-function generateKey(len = 16) {
-  const t = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let n = "";
-  for (let i = 0; i < len; i++) {
-    n += t.charAt(Math.floor(Math.random() * t.length));
-  }
-  return n;
-}
-function generateQrCode(text) {
-  qrcode.generate(text, { small: true });
-}
 function createMaxIntervalFn({
   fn,
   interval = 3e3,
@@ -25,32 +13,38 @@ function createMaxIntervalFn({
 }) {
   return new Promise((resolve, reject) => {
     let i = 0;
-    const timer = setInterval(async () => {
-      i += 1;
-      const result = await fn();
-      if (result) {
+    let isResolved = false;
+    let timer = null;
+    const cleanup = () => {
+      if (timer) {
         clearInterval(timer);
-        resolve(result);
+        timer = null;
+      }
+    };
+    timer = setInterval(async () => {
+      if (isResolved) {
+        cleanup();
+        return;
+      }
+      i += 1;
+      try {
+        const result = await fn();
+        if (result) {
+          isResolved = true;
+          cleanup();
+          resolve(result);
+          return;
+        }
+      } catch (error) {
+        console.error("Error in interval function:", error);
       }
       if (i >= max) {
-        clearInterval(timer);
+        cleanup();
         reject("timeout");
       }
     }, interval);
+    process.on("unhandledRejection", cleanup);
   });
-}
-async function fetchToken(key) {
-  const { statusCode, body } = await request(
-    `https://codesign.qq.com/oauth/check?key=${key}`
-  );
-  if (statusCode !== 200) {
-    return null;
-  }
-  const { result } = await body.json();
-  if (result) {
-    return result.token;
-  }
-  return null;
 }
 async function fetchCodesignIcons(params) {
   const { project_id, team_id, include, per_page, page, Authorization } = params;
@@ -62,7 +56,6 @@ async function fetchCodesignIcons(params) {
       }
     }
   );
-  console.log("\u{1F680} ~ statusCode:", statusCode);
   if (statusCode !== 200) {
     return;
   }
@@ -170,6 +163,124 @@ function generateStyle(isColors2, uri) {
     };
   }
 }
+async function openInBrowser(url) {
+  const open = (await import('open')).default;
+  await open(url);
+}
+async function getWeworkLoginToken() {
+  const headers = {
+    accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "accept-language": "en,zh-CN;q=0.9,zh;q=0.8",
+    "cache-control": "no-cache",
+    pragma: "no-cache",
+    "sec-ch-ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"macOS"',
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "same-site",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    cookie: "wwrtx.i18n_lan=en; ww_lang=en,cn,zh",
+    referer: "https://codesign.qq.com/",
+    origin: "https://codesign.qq.com",
+    "upgrade-insecure-requests": "1"
+  };
+  const {
+    statusCode,
+    body,
+    headers: responseHeaders
+  } = await request(
+    "https://open.work.weixin.qq.com/wwopen/sso/3rd_qrConnect?appid=ww7a6a2fcbc9ee24ff&redirect_uri=https%3A%2F%2Fcodesign.qq.com%2Foauth%2Fcompanies%2Fwework%2Fcallback&usertype=member&lang=zh",
+    {
+      headers
+    }
+  );
+  if (statusCode !== 200) {
+    throw new Error("Failed to get QR code page");
+  }
+  const cookies = responseHeaders["set-cookie"];
+  if (cookies) {
+    const newCookies = Array.isArray(cookies) ? cookies : [cookies];
+    const cookieStr = newCookies.map((cookie) => cookie.split(";")[0]).join("; ");
+    headers.cookie = cookieStr;
+  }
+  const html = await body.text();
+  const settingsMatch = html.match(/window\.settings\s*=\s*({[\s\S]+?});/);
+  if (!settingsMatch) {
+    throw new Error("Failed to find settings in HTML");
+  }
+  try {
+    const settingsStr = settingsMatch[1].replace(/\n/g, "").replace(/\s+/g, " ");
+    const settings = JSON.parse(settingsStr);
+    console.log("\u{1F680} ~ getWeworkLoginToken ~ settings:", settings);
+    if (settings.errCode) {
+      throw new Error(`WeWork error: ${settings.errMsg}`);
+    }
+    const key = settings.key;
+    if (!key) {
+      throw new Error("Failed to get key from settings");
+    }
+    const qrUrl = `https:${settings.qrUrl}`;
+    await openInBrowser(qrUrl);
+    console.log("Please scan the QR code in your browser to login");
+    const result = await createMaxIntervalFn({
+      fn: async () => {
+        const { statusCode: statusCode2, body: body2 } = await request(
+          `https://open.work.weixin.qq.com/wwopen/sso/l/qrConnect?callback=jsonpCallback&key=${key}&redirect_uri=https%3A%2F%2Fcodesign.qq.com%2Foauth%2Fcompanies%2Fwework%2Fcallback&appid=ww7a6a2fcbc9ee24ff&_=${Date.now()}`,
+          {
+            headers: {
+              ...headers,
+              referer: "https://open.work.weixin.qq.com/",
+              origin: "https://open.work.weixin.qq.com"
+            }
+          }
+        );
+        if (statusCode2 !== 200) {
+          return null;
+        }
+        const text = await body2.text();
+        const match = text.match(/^jsonpCallback\((.*)\)$/);
+        if (!match) {
+          return null;
+        }
+        const json = JSON.parse(match[1]);
+        console.log("\u{1F680} ~ fn: ~ json:", json);
+        if (json.status === "QRCODE_SCAN_SUCC") {
+          const { auth_code } = json;
+          const { headers: redirectHeaders } = await request(
+            `https://codesign.qq.com/oauth/companies/wework/callback?auth_code=${auth_code}&appid=ww7a6a2fcbc9ee24ff`,
+            {
+              headers: {
+                ...headers,
+                referer: "https://open.work.weixin.qq.com/",
+                origin: "https://open.work.weixin.qq.com"
+              },
+              maxRedirections: 0,
+              throwOnError: false
+            }
+          );
+          const cookies2 = redirectHeaders["set-cookie"];
+          if (!cookies2?.length) {
+            return null;
+          }
+          const accessTokenCookie = Array.isArray(cookies2) ? cookies2.find((cookie) => cookie.startsWith("access_token=")) : cookies2.split(",").find((cookie) => cookie.startsWith("access_token="));
+          if (!accessTokenCookie) {
+            return null;
+          }
+          const token = accessTokenCookie.split(";")[0].split("=")[1];
+          return token;
+        }
+        return null;
+      },
+      interval: 2e3,
+      max: 30
+    });
+    return result;
+  } catch (error) {
+    console.error("Error parsing settings:", error);
+    throw error;
+  }
+}
 var UniappIconPlugin = class {
   options;
   icons;
@@ -233,10 +344,6 @@ var UniappIconPlugin = class {
                   path.dirname(resolveData.contextInfo.issuer),
                   modulePath
                 );
-                console.log("Resolved virtual module:", {
-                  from: request2,
-                  to: resolveData.request
-                });
               } else {
                 console.warn(`Icon not found: ${iconName}`);
                 console.warn("Available icons:", Array.from(this.icons.keys()));
@@ -251,18 +358,6 @@ var UniappIconPlugin = class {
 var webpack_uniapp_icon_default = UniappIconPlugin;
 
 // src/index.ts
-async function fetchCodesignToken() {
-  const key = generateKey();
-  const url = `https://codesign.qq.com/login/${key}`;
-  generateQrCode(url);
-  const token = await createMaxIntervalFn({
-    fn: async () => {
-      console.log("fetching token...");
-      return fetchToken(key);
-    }
-  });
-  return token;
-}
 async function fetchCodesignIconsByToken(options) {
   const { token, projectId, teamId } = options;
   const icons = await fetchCodesignIcons({
@@ -273,7 +368,6 @@ async function fetchCodesignIconsByToken(options) {
     page: 1,
     Authorization: `Bearer ${token}`
   });
-  console.log("\u{1F680} ~ fetchCodesignIconsByToken ~ icons:", icons);
   if (!icons) {
     throw new Error("fetch icons failed");
   }
@@ -314,4 +408,4 @@ async function buildUniAppIcons(options) {
   await promises.writeFile(`${dist}index.js`, exportLines.join("\n"), "utf8");
 }
 
-export { webpack_uniapp_icon_default as WebpackIconPlugin, buildIconifyJSON, buildUniAppIcons, fetchCodesignIconsByToken, fetchCodesignToken };
+export { webpack_uniapp_icon_default as WebpackIconPlugin, buildIconifyJSON, buildUniAppIcons, fetchCodesignIconsByToken, getWeworkLoginToken };

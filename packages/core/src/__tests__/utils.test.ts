@@ -7,7 +7,6 @@ import {
   fetchCodesignIcons,
   fetchToken,
   generateKey,
-  generateQrCode,
   isColors,
   parseIcons,
   toCamelCase,
@@ -73,8 +72,7 @@ describe('utils', () => {
     'download icon json',
     async () => {
       const key = generateKey()
-      const url = `https://codesign.qq.com/login/${key}`
-      generateQrCode(url)
+      console.log('key:', key)
 
       const token = (await createMaxIntervalFn<string | null>({
         fn: async () => {
@@ -116,8 +114,14 @@ describe('utils', () => {
     expect(toCamelCase('uni-more-hello')).toEqual('UniMoreHello')
   })
 
-  test('getWeworkLoginToken', async () => {
-    const token = await getWeworkLoginToken()
-    expect(token).toMatchInlineSnapshot()
-  })
+  test(
+    'getWeworkLoginToken',
+    async () => {
+      const token = await getWeworkLoginToken()
+      expect(token).toBeTruthy()
+      // Return immediately after getting token
+      return
+    },
+    { timeout: 60000 }
+  )
 })

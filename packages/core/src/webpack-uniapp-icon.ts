@@ -96,10 +96,6 @@ class UniappIconPlugin {
                   path.dirname(resolveData.contextInfo.issuer),
                   modulePath
                 )
-                console.log('Resolved virtual module:', {
-                  from: request,
-                  to: resolveData.request
-                })
               } else {
                 console.warn(`Icon not found: ${iconName}`)
                 console.warn('Available icons:', Array.from(this.icons.keys()))

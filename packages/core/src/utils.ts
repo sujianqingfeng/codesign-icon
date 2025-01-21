@@ -10,7 +10,6 @@ import {
 } from '@iconify/tools'
 
 import { validateIconSet } from '@iconify/utils'
-import QRCode from 'qrcode'
 import { request } from 'undici'
 
 export function generateKey(len: number = 16) {
@@ -20,19 +19,6 @@ export function generateKey(len: number = 16) {
     n += t.charAt(Math.floor(Math.random() * t.length))
   }
   return n
-}
-
-export function generateQrCode(text: string) {
-  return QRCode.toString(text, {
-    type: 'terminal',
-    errorCorrectionLevel: 'Q',
-    margin: 2,
-    scale: 1,
-    color: {
-      dark: '\u001b[40m  \u001b[0m',
-      light: '\u001b[47m  \u001b[0m'
-    }
-  })
 }
 
 export function createMaxIntervalFn<T>({
@@ -46,18 +32,43 @@ export function createMaxIntervalFn<T>({
 }) {
   return new Promise((resolve, reject) => {
     let i = 0
-    const timer = setInterval(async () => {
-      i += 1
-      const result = await fn()
-      if (result) {
+    let isResolved = false
+    let timer: NodeJS.Timeout | null = null
+
+    const cleanup = () => {
+      if (timer) {
         clearInterval(timer)
-        resolve(result)
+        timer = null
       }
+    }
+
+    timer = setInterval(async () => {
+      if (isResolved) {
+        cleanup()
+        return
+      }
+
+      i += 1
+      try {
+        const result = await fn()
+        if (result) {
+          isResolved = true
+          cleanup()
+          resolve(result)
+          return
+        }
+      } catch (error) {
+        console.error('Error in interval function:', error)
+      }
+
       if (i >= max) {
-        clearInterval(timer)
+        cleanup()
         reject('timeout')
       }
     }, interval)
+
+    // Ensure cleanup on unhandled rejection
+    process.on('unhandledRejection', cleanup)
   })
 }
 
@@ -199,7 +210,6 @@ export function generateUniAppTemplate(style: string, exportName: string) {
 }
 
 export function generateStyle(isColors: boolean, uri: string) {
-  // const uri = `url("${url}")`
   if (isColors) {
     return {
       background: `${uri} no-repeat`,
@@ -219,6 +229,11 @@ export function generateStyle(isColors: boolean, uri: string) {
       width: '1em'
     }
   }
+}
+
+export async function openInBrowser(url: string) {
+  const open = (await import('open')).default
+  await open(url)
 }
 
 export async function getWeworkLoginToken() {
@@ -288,10 +303,9 @@ export async function getWeworkLoginToken() {
       throw new Error('Failed to get key from settings')
     }
 
-    const qrUrl = `https://open.work.weixin.qq.com/wwopen/sso/confirm2?k=${key}&notretry=yes`
-    const qrCode = await generateQrCode(qrUrl)
-    console.log(`\n${qrCode}\n`)
-    console.log('🚀 ~ getWeworkLoginToken ~ qrUrl:', qrUrl)
+    const qrUrl = `https:${settings.qrUrl}`
+    await openInBrowser(qrUrl)
+    console.log('Please scan the QR code in your browser to login')
 
     const result = await createMaxIntervalFn<string | null>({
       fn: async () => {
@@ -311,8 +325,13 @@ export async function getWeworkLoginToken() {
         }
 
         const text = await body.text()
-        // Remove jsonpCallback wrapper
-        const json = JSON.parse(text.slice(13, -1))
+        // Parse JSONP response
+        const match = text.match(/^jsonpCallback\((.*)\)$/)
+        if (!match) {
+          return null
+        }
+        const json = JSON.parse(match[1])
+        console.log('🚀 ~ fn: ~ json:', json)
 
         if (json.status === 'QRCODE_SCAN_SUCC') {
           const { auth_code } = json

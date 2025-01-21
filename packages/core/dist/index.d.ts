@@ -61,9 +61,10 @@ declare class UniappIconPlugin {
     apply(compiler: Compiler): void;
 }
 
-declare function fetchCodesignToken(): Promise<string>;
+declare function getWeworkLoginToken(): Promise<unknown>;
+
 declare function fetchCodesignIconsByToken(options: FetchIconsParams): Promise<IconsItem[]>;
 declare function buildIconifyJSON(options: BuildIconifyJSONOptions): Promise<_iconify_types.IconifyJSON>;
 declare function buildUniAppIcons(options: BuildUniAppIconsOptions): Promise<void>;
 
-export { type BaseListResp, type BuildIconifyJSONOptions, type BuildUniAppIconsOptions, type FetchIconsParams, type IconsItem, type IconsResp, type IonsParams, type TokenResp, UniappIconPlugin as WebpackIconPlugin, buildIconifyJSON, buildUniAppIcons, fetchCodesignIconsByToken, fetchCodesignToken };
+export { type BaseListResp, type BuildIconifyJSONOptions, type BuildUniAppIconsOptions, type FetchIconsParams, type IconsItem, type IconsResp, type IonsParams, type TokenResp, UniappIconPlugin as WebpackIconPlugin, buildIconifyJSON, buildUniAppIcons, fetchCodesignIconsByToken, getWeworkLoginToken };

@@ -2,3 +2,4 @@ node_modules
 unpackage
 packages/base/uniapp
 .DS_Store
+dist
