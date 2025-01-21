@@ -30,7 +30,7 @@ class UniappIconPlugin {
   }
 
   async init() {
-    const prefix = this.options.prefix || 'Icon'
+    const prefix = this.options.prefix || ''
     const svgs = await toSvgs(this.options.data)
 
     for (const [name, icon] of svgs) {
