@@ -141,7 +141,7 @@ function generateUniAppTemplate(style, exportName) {
   }
   </script>
   <template>
-    <view :style="{ fontSize: size, color: color }">
+    <view @click="$emit('click')" :style="{ fontSize: size, color: color }">
       <view :style="style"/>
     </view>
   </template>
