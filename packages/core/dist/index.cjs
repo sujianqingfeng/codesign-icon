@@ -287,6 +287,22 @@ async function getWeworkLoginToken() {
     throw error;
   }
 }
+async function fetchIconsInfo({
+  projectId,
+  token
+}) {
+  const url = `https://codesign.qq.com/api/icon-projects/${projectId}?include=icons`;
+  const { statusCode, body } = await undici.request(url, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+  if (statusCode !== 200) {
+    return;
+  }
+  const data = await body.json();
+  return data;
+}
 var UniappIconPlugin = class {
   options;
   icons;
@@ -460,4 +476,5 @@ exports.WebpackIconPlugin = webpack_uniapp_icon_default;
 exports.buildIconifyJSON = buildIconifyJSON;
 exports.buildUniAppIcons = buildUniAppIcons;
 exports.fetchCodesignIconsByToken = fetchCodesignIconsByToken;
+exports.fetchIconsInfo = fetchIconsInfo;
 exports.getWeworkLoginToken = getWeworkLoginToken;

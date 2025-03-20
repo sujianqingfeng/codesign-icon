@@ -379,3 +379,25 @@ export async function getWeworkLoginToken() {
     throw error
   }
 }
+
+export async function fetchIconsInfo({
+  projectId,
+  token
+}: {
+  projectId: string
+  token: string
+}) {
+  const url = `https://codesign.qq.com/api/icon-projects/${projectId}?include=icons`
+
+  const { statusCode, body } = await request(url, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
+  if (statusCode !== 200) {
+    return
+  }
+  const data = await body.json()
+
+  return data
+}

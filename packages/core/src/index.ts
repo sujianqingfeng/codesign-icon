@@ -82,4 +82,4 @@ export async function buildUniAppIcons(options: BuildUniAppIconsOptions) {
 
 export { default as WebpackIconPlugin } from './webpack-uniapp-icon'
 export * from './types'
-export { getWeworkLoginToken } from './utils'
+export { getWeworkLoginToken, fetchIconsInfo } from './utils'
